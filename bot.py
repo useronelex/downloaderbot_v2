@@ -53,7 +53,7 @@ async def handle_video(message: types.Message):
 async def handle_webhook(request):
     """Обробка запитів від Telegram"""
     update = types.Update(**await request.json())
-    await dp.process_update(update)
+    await dp.feed_update(update)
     return web.Response(text="ok")
 
 
