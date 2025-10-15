@@ -10,7 +10,8 @@ from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # наприклад: https://downloaderbot-v2.onrender.com
+#WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # наприклад: https://downloaderbot-v2.onrender.com
+WEBHOOK_URL = "https://downloaderbot-v2.onrender.com"
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
 FULL_WEBHOOK_URL = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
 
