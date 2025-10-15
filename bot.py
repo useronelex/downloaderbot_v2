@@ -10,7 +10,6 @@ from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-#WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # наприклад: https://downloaderbot-v2.onrender.com
 WEBHOOK_URL = "https://downloaderbot-v2.onrender.com"
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
 FULL_WEBHOOK_URL = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
@@ -25,7 +24,7 @@ bot = Bot(
 )
 dp = Dispatcher()
 router = Router()
-dp.include_router(router)  # 🔹 хендлери мають бути зареєстровані відразу
+dp.include_router(router)
 
 # ================== HANDLERS ==================
 @router.message(F.text.contains("instagram.com"))
@@ -68,6 +67,8 @@ async def handle_webhook(request):
 
 async def on_startup(app):
     print(f"🛠 Setting webhook: {FULL_WEBHOOK_URL}")
+    # Видаляємо старий вебхук і ставимо новий
+    await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(FULL_WEBHOOK_URL)
     print("🤖 Бот запущено через webhook!")
 
@@ -82,6 +83,7 @@ app.router.add_post(WEBHOOK_PATH, handle_webhook)
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
+# ================== SERVER ENTRY ==================
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 Starting web server on port {port}")
