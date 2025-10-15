@@ -10,7 +10,7 @@ from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
 BOT_TOKEN = os.getenv("BOT_TOKEN")  # токен бота з Render environment
-WEBHOOK_URL = "https://downloaderbot-v2.onrender.com"  # твій публічний URL на Render
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # твій публічний URL на Render, наприклад: https://downloaderbot-v2.onrender.com
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"  # шлях для Telegram webhook
 FULL_WEBHOOK_URL = WEBHOOK_URL + WEBHOOK_PATH  # повний URL, куди Telegram шле оновлення
 
@@ -27,6 +27,7 @@ router = Router()
 # ================== HANDLERS ==================
 @router.message(F.text.contains("instagram.com"))
 async def handle_video(message: types.Message):
+    print(f"🔹 Received message: {message.text}")  # лог повідомлення
     wait_msg = await message.answer("⏳ Завантажую відео...")
 
     try:
@@ -45,33 +46,38 @@ async def handle_video(message: types.Message):
 
     if link:
         await message.answer_video(link)
+        print(f"✅ Video sent for link: {message.text}")
     else:
         await message.answer("😵 Не вдалося знайти відео.")
-
+        print(f"⚠️ No video found for link: {message.text}")
 
 # ================== WEBHOOK SERVER ==================
 async def handle_webhook(request):
-    update_json = await request.json()
-    print("🔹 Incoming update:", update_json)
-    update = types.Update(**update_json)
-    await dp.feed_update(update)
+    """Обробка запитів від Telegram"""
+    try:
+        update_json = await request.json()
+        print("🔹 Incoming update:", update_json)
+        update = types.Update(**update_json)
+        await dp.feed_update(update)  # в aiogram v3.x process_update → feed_update
+    except Exception as e:
+        print(f"❌ Error handling update: {e}")
+        return web.Response(status=500, text="Internal Server Error")
     return web.Response(text="ok")
-
 
 
 async def on_startup(app):
     await bot.set_webhook(FULL_WEBHOOK_URL)
     dp.include_router(router)
-    print("🤖 Бот запущено через webhook!")
+    print(f"🤖 Бот запущено через webhook на {FULL_WEBHOOK_URL}")
 
 
 async def on_shutdown(app):
-    print("🧹 Завершення роботи бота...")
     await bot.delete_webhook()
     await bot.session.close()
+    print("🧹 Бот завершив роботу")
 
 
-# ================== APP ==================
+# ================== AIOHTTP APP ==================
 app = web.Application()
 app.router.add_post(WEBHOOK_PATH, handle_webhook)
 app.on_startup.append(on_startup)
