@@ -10,9 +10,11 @@ from aiohttp import web
 from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # посилання на webhook, наприклад: https://yourapp.onrender.com/webhook
-WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # токен бота з Render environment
+WEBHOOK_URL = "https://downloaderbot-v2.onrender.com"  # твій публічний URL на Render
+WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"  # шлях для Telegram webhook
+FULL_WEBHOOK_URL = WEBHOOK_URL + WEBHOOK_PATH  # повний URL, куди Telegram шле оновлення
+
 
 if not BOT_TOKEN or not WEBHOOK_URL:
     raise ValueError("❌ BOT_TOKEN або WEBHOOK_URL не задано в environment variables")
