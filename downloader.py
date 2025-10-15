@@ -4,7 +4,6 @@ async def extract_instagram_video(url: str) -> str | None:
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'cookies': 'cookies.txt',  # 👈 важливо
         'format': 'best[ext=mp4]/best',
         'skip_download': True
     }
@@ -14,5 +13,6 @@ async def extract_instagram_video(url: str) -> str | None:
             info = ydl.extract_info(url, download=False)
             return info.get("url")
     except Exception as e:
-        print(f"Помилка: {e}")
+        print(f"❌ Downloader error: {e}")
         return None
+
