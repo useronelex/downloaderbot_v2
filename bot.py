@@ -1,3 +1,4 @@
+import os
 import asyncio
 from aiogram import Bot, Dispatcher, Router, types, F
 from aiogram.enums import ParseMode
@@ -8,9 +9,10 @@ from aiogram.client.default import DefaultBotProperties
 from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
-BOT_TOKEN = "7644549931:AAHJFUvF3SZe2Ig3izoBF2wj10IV_Vq5pQM"
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # <-- беремо токен із середовища
+
 if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN is not set")
+    raise ValueError("❌ BOT_TOKEN is not set in environment variables")
 
 bot = Bot(
     token=BOT_TOKEN,
