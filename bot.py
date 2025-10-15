@@ -5,14 +5,17 @@ from aiogram.enums import ParseMode
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram import exceptions
 from aiogram.client.default import DefaultBotProperties
+from aiohttp import web
 
 from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
-BOT_TOKEN = os.getenv("BOT_TOKEN")  # <-- беремо токен із середовища
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # посилання на webhook, наприклад: https://yourapp.onrender.com/webhook
+WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
 
-if not BOT_TOKEN:
-    raise ValueError("❌ BOT_TOKEN is not set in environment variables")
+if not BOT_TOKEN or not WEBHOOK_URL:
+    raise ValueError("❌ BOT_TOKEN або WEBHOOK_URL не задано в environment variables")
 
 bot = Bot(
     token=BOT_TOKEN,
@@ -55,35 +58,46 @@ async def handle_video(message: types.Message):
 
 @router.callback_query(F.data == "shutdown_bot")
 async def shutdown_bot(callback: types.CallbackQuery):
-    """Обробка натискання кнопки 'Завершити роботу'"""
     await callback.answer("🔻 Завершення роботи...")
-
     try:
         await callback.message.edit_text("🛑 Бот завершує роботу...")
     except exceptions.TelegramBadRequest:
         await callback.message.delete()
         await callback.message.answer("🛑 Бот завершує роботу...")
 
-    # Коректне завершення polling
-    asyncio.create_task(stop_polling())
+    # Завершення сервера
+    asyncio.create_task(stop_server())
 
 
-async def stop_polling():
-    """Акуратне завершення без RuntimeError"""
-    await asyncio.sleep(1)
-    await dp.stop_polling()
+async def stop_server():
+    await bot.session.close()
+    print("🧹 Бот завершив роботу.")
+    os._exit(0)  # Render "kill" process
+
+
+# ================== WEBHOOK SERVER ==================
+async def handle_webhook(request):
+    """Обробка запитів від Telegram"""
+    update = types.Update(**await request.json())
+    await dp.process_update(update)
+    return web.Response(text="ok")
+
+
+async def on_startup(app):
+    await bot.set_webhook(WEBHOOK_URL + WEBHOOK_PATH)
+    dp.include_router(router)
+    print("🤖 Бот запущено через webhook!")
+
+
+async def on_shutdown(app):
+    await bot.delete_webhook()
     await bot.session.close()
 
 
-# ================== MAIN ==================
-async def main():
-    dp.include_router(router)
-    print("🤖 Бот запущено і готовий до роботи!")
-    await dp.start_polling(bot)
-
+app = web.Application()
+app.router.add_post(WEBHOOK_PATH, handle_webhook)
+app.on_startup.append(on_startup)
+app.on_shutdown.append(on_shutdown)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("🧹 Завершено вручну.")
+    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
