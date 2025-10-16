@@ -66,6 +66,14 @@ async def handle_webhook(request):
         return web.Response(status=500, text="Internal Server Error")
     return web.Response(text="ok")
 
+
+async def test_handler(request):
+    return web.Response(text="✅ Webhook endpoint is alive!")
+
+app.router.add_get("/", test_handler)
+app.router.add_post("/", handle_webhook)
+app.router.add_post("/webhook/{token}", handle_webhook)
+
 async def on_startup(app):
     print(f"🛠 Setting webhook: {FULL_WEBHOOK_URL}")
     # Видаляємо старий вебхук і ставимо новий
@@ -80,7 +88,6 @@ async def on_shutdown(app):
 
 # ================== AIOHTTP APP ==================
 app = web.Application()
-app.router.add_post(WEBHOOK_PATH, handle_webhook)
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
