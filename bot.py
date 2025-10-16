@@ -10,7 +10,7 @@ from downloader import extract_instagram_video
 
 # ================== CONFIG ==================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = "https://downloaderbot-v2.onrender.com"
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://downloaderbot-v2.onrender.com")
 
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
 FULL_WEBHOOK_URL = WEBHOOK_URL + WEBHOOK_PATH
@@ -54,7 +54,7 @@ async def handle_video(message: types.Message):
         await message.answer("😵 Не вдалося знайти відео.")
         print(f"⚠️ No video found for link: {message.text}")
 
-# ================== WEBHOOK SERVER ==================
+# ================== WEBHOOK HANDLERS ==================
 async def handle_webhook(request):
     try:
         update_json = await request.json()
@@ -66,17 +66,11 @@ async def handle_webhook(request):
         return web.Response(status=500, text="Internal Server Error")
     return web.Response(text="ok")
 
-
 async def test_handler(request):
     return web.Response(text="✅ Webhook endpoint is alive!")
 
-app.router.add_get("/", test_handler)
-app.router.add_post("/", handle_webhook)
-app.router.add_post("/webhook/{token}", handle_webhook)
-
 async def on_startup(app):
     print(f"🛠 Setting webhook: {FULL_WEBHOOK_URL}")
-    # Видаляємо старий вебхук і ставимо новий
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(FULL_WEBHOOK_URL)
     print("🤖 Бот запущено через webhook!")
@@ -88,6 +82,12 @@ async def on_shutdown(app):
 
 # ================== AIOHTTP APP ==================
 app = web.Application()
+
+# ✅ Реєструємо маршрути після створення app
+app.router.add_get("/", test_handler)
+app.router.add_post("/", handle_webhook)
+app.router.add_post("/webhook/{token}", handle_webhook)
+
 app.on_startup.append(on_startup)
 app.on_shutdown.append(on_shutdown)
 
