@@ -11,8 +11,9 @@ from downloader import extract_instagram_video
 # ================== CONFIG ==================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 WEBHOOK_URL = "https://downloaderbot-v2.onrender.com"
+
 WEBHOOK_PATH = f"/webhook/{BOT_TOKEN}"
-FULL_WEBHOOK_URL = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
+FULL_WEBHOOK_URL = WEBHOOK_URL + WEBHOOK_PATH
 
 if not BOT_TOKEN or not WEBHOOK_URL:
     raise ValueError("❌ BOT_TOKEN або WEBHOOK_URL не задано в environment variables")
